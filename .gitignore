@@ -1,5 +1,10 @@
 .venv/
+.venv/*
 .venv
+venv/
+venv/*
+venv
+
 ropeproject/
 ropeproject
 .DS_Store
