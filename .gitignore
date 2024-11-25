@@ -1,0 +1,6 @@
+.venv/
+.venv
+ropeproject/
+ropeproject
+.DS_Store
+.env
