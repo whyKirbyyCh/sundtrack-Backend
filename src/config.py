@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file='.env', extra='ignore')
     app_name: Optional[str] = None
     app_version: Optional[str] = None
+    api_retries: int = 3
 
 if __name__ == "__main__":
     settings = Settings()
