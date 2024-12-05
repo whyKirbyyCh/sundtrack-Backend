@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
-
+#TODO: refactor this into multiple class
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file='.env', extra='ignore')
     app_name: Optional[str] = None
@@ -9,6 +9,5 @@ class Settings(BaseSettings):
     agent_interaction_uri: Optional[str] = None
     api_retries: int = 3
     number_of_pages: int = 1
-
-if __name__ == "__main__":
-    settings = Settings()
+    database_uri: Optional[str] = None
+    main_database: str = "sundtrack"

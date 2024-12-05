@@ -1,10 +1,12 @@
 from functools import lru_cache
 from fastapi import Depends, FastAPI
 from typing_extensions import Annotated
-from config import Settings
+from src.config import Settings
+from src.affiliate.router import affiliate_router
+from src.analysis.client import AnalysisClient
+
 
 app = FastAPI()
-
 
 @lru_cache
 def get_settings():
@@ -20,3 +22,12 @@ async def info(settings: Annotated[Settings, Depends(get_settings)]):
         "app_name": settings.app_name,
         "app_version": settings.app_version
     }
+
+@app.on_event("shutdown")
+async def shutdown_analysisclient():
+    await AnalysisClient.CLIENT.aclose()
+
+app.include_router(affiliate_router)
+
+
+print(affiliate_router)

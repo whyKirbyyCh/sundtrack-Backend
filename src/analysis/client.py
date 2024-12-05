@@ -25,47 +25,46 @@ class AnalysisClient(metaclass=Singleton):
     _retries = Settings().api_retries if Settings().api_retries is not None else 3
     _number_of_pages = Settings().number_of_pages if Settings().number_of_pages is not None else 1
     _agent_interaction_uri = Settings().agent_interaction_uri if Settings().agent_interaction_uri is not None else None
+    CLIENT = httpx.AsyncClient()
 
     @classmethod
     async def _request(cls, request_url: str, method: str, data: Optional[Any], parameters: Optional[Dict[str, str]], headers: Optional[Dict[str, str]]) -> Optional[httpx.Response]:
         response = None
         status_code = "no_code_assigned_yet"
-        async with httpx.AsyncClient() as client:
-            for attempts in range(cls._retries):
-                try:
-                    response = await getattr(client, method.lower())(url=request_url,
-                        **{key: value for key, value in
-                            {
-                                "params": parameters,
-                                "data": data,
-                                "headers": headers,
-                            }.items() if value})
+        for attempts in range(cls._retries):
+            try:
+                response = await getattr(cls.CLIENT, method.lower())(url=request_url,
+                    **{key: value for key, value in
+                        {
+                            "params": parameters,
+                            "data": data,
+                            "headers": headers,
+                        }.items() if value})
 
-                    status_code = response.status_code
-                    response.raise_for_status()
+                status_code = response.status_code
+                response.raise_for_status()
 
-                    return response
+                return response
 
-                except httpx.HTTPStatusError:
-                    _logger.warning(f"Attempt {attempts + 1}/{cls._retries}: HTTP status error for {request_url} with status code {status_code}", exc_info=True, )
+            except httpx.HTTPStatusError:
+                _logger.warning(f"Attempt {attempts + 1}/{cls._retries}: HTTP status error for {request_url} with status code {status_code}", exc_info=True, )
 
-                    if attempts + 1 >= cls._retries:
-                        _logger.error(f"Max retries reached for {request_url}.")
-                        raise
-
-                except (httpx.RequestError, asyncio.TimeoutError) as exc:
-                    _logger.warning(f"Attempt {attempts + 1}/{cls._retries}: Request or timeout error for {request_url}: {str(exc)}",exc_info=True, )
-
-                    if attempts + 1 >= cls._retries:
-                        _logger.error(f"Max retries reached for {request_url}.")
-                        raise
-
-                except Exception as exc:
-                    _logger.error(f"Unexpected error during request to {request_url}: {type(exc).__name__}: {exc}", exc_info=True, )
+                if attempts + 1 >= cls._retries:
+                    _logger.error(f"Max retries reached for {request_url}.")
                     raise
 
-        return None
+            except (httpx.RequestError, asyncio.TimeoutError) as exc:
+                _logger.warning(f"Attempt {attempts + 1}/{cls._retries}: Request or timeout error for {request_url}: {str(exc)}",exc_info=True, )
 
+                if attempts + 1 >= cls._retries:
+                    _logger.error(f"Max retries reached for {request_url}.")
+                    raise
+
+            except Exception as exc:
+                _logger.error(f"Unexpected error during request to {request_url}: {type(exc).__name__}: {exc}", exc_info=True, )
+                raise
+
+        return None
 
     @staticmethod
     def _response_to_json(response: Optional[httpx.Response]) -> Optional[Union[JSONReturnType, Tuple[JSONReturnType, List[Dict[str, str]]]]]:
@@ -105,7 +104,7 @@ class AnalysisClient(metaclass=Singleton):
             return None
 
     @classmethod
-    async def get_nutrients(cls, products: List[str]) -> Optional[Union[JSONReturnType, Tuple[JSONReturnType, List[Dict[str, str]]]]]
+    async def get_nutrients(cls, products: List[str]) -> Optional[Union[JSONReturnType, Tuple[JSONReturnType, List[Dict[str, str]]]]]:
         ...
 
 if __name__ == "__main__":
